@@ -9,6 +9,9 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+- **Receipt log witness.** Consistency proofs default to RFC 6962 / RFC 9162. `GET /v1/receipts/tree/consistency?format=legacy` keeps the previous proof. `GET /v1/receipts/tree/checkpoint` is a C2SP signed note, one origin per epoch. `ChitLogWitness` stores `(epoch, size, root)`, checks an RFC consistency proof in `append`, and opens an epoch only from the owner Safe. The appender cannot declare an epoch or change roles. The gateway calls `append` only when `RECEIPT_LOG_WITNESS=1` (off unless it is exactly `1`) and still posts the bare-root transfer. Boot refuses a journal that is not an extension of the contract head. `xfuel-verify --rpc --witness` reads that head. The Sepolia script preflights and does not broadcast. Not deployed. No mainnet transaction. See [receipt-log-witness.md](docs/product/receipt-log-witness.md).
+
 ### Changed
 - **`@xfuel/verify` 0.3.0** and **`chit402-verify` 0.3.0**. The alias depends on `@xfuel/verify` `^0.3.0`. This packages the canonical preimage check, the issuer-history pin (`not_after`), and refusal checks. Publish `@xfuel/verify` first, then `chit402-verify`. No production deploy in this change.
 
