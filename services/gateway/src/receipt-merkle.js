@@ -47,7 +47,7 @@ import {
   readReceiptLogPin,
   resolveAnchorSender,
 } from './receipt-log-anchor.js';
-import { assertPinnedEpochRecord } from './receipt-log-epoch.js';
+import { assertPinnedEpochRecord, verifyUnloggedSection } from './receipt-log-epoch.js';
 export { FRESH_GENESIS_LOG, assertLatestBaseAnchor, readReceiptLogPin };
 
 export { ReceiptLogRefused, freshGenesisAllowed, receiptLogBootRequested, receiptLogStrict };
@@ -2172,6 +2172,17 @@ export class ReceiptMerkleTree {
       }
       if (JSON.stringify(payload.orphans ?? []) !== JSON.stringify(this.epochRecord.orphans ?? [])) {
         throw new ReceiptLogRefused('epoch_signature', 'epoch record orphans do not match the signature');
+      }
+      const payloadUnlogged = payload.unlogged === undefined ? null : payload.unlogged;
+      const recordUnlogged = this.epochRecord.unlogged === undefined ? null : this.epochRecord.unlogged;
+      if (JSON.stringify(payloadUnlogged) !== JSON.stringify(recordUnlogged)) {
+        throw new ReceiptLogRefused('epoch_signature', 'epoch record unlogged list does not match the signature');
+      }
+      if (Number(this.epochRecord.payload_version) === 2) {
+        const listed = verifyUnloggedSection(this.epochRecord.unlogged);
+        if (!listed.ok) {
+          throw new ReceiptLogRefused(listed.reason || 'unlogged_hash', 'epoch record unlogged list does not verify');
+        }
       }
     } else if (this.epochRecord && receiptLogStrict()) {
       throw new ReceiptLogRefused('epoch_unsigned', 'epoch record is missing its signature');
